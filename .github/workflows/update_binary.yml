@@ -22,14 +22,20 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           echo ">>> 下载最新正式版内核..."
-          gh release download --repo MetaCubeX/mihomo --pattern "*linux-amd64-v*.gz" --output mihomo.gz
+          
+          # 1. 修改 Pattern，只匹配 compatible 版本 (最稳妥)
+          # 这样只会匹配到一个文件，例如: mihomo-linux-amd64-compatible-v1.18.1.gz
+          gh release download --repo MetaCubeX/mihomo --pattern "*linux-amd64-compatible-v*.gz" --output mihomo.gz
+          
           gunzip mihomo.gz
           chmod +x mihomo
           
-          # 创建一个空的配置目录，防止编译时报错
+          # 创建配置目录
           mkdir -p temp_config
-          # 创建存放结果的文件夹
           mkdir -p RULE-SET
+          
+          echo ">>> 内核准备完毕"
+          ./mihomo -v
 
       - name: 3. 处理 Hagezi Pro Plus (魔法转换 ✨)
         run: |
