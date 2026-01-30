@@ -1,7 +1,7 @@
 # 直连应用列表
-# MAc和Win双端混合规则
+# Mac和Win双端混合规则
 payload:
-  # ====== macOS ======
+  # ====== macOS (区分大小写) ======
   - PROCESS-NAME,WeChat
   - PROCESS-NAME,OneDrive
   - PROCESS-NAME,DingTalk
@@ -9,7 +9,7 @@ payload:
   - PROCESS-NAME,PasteNow
   - PROCESS-NAME,wpsoffice
 
-  # ====== Windows ======
+  # ====== Windows (不区分大小写) ======
   - PROCESS-NAME,WeChat.exe
   - PROCESS-NAME,OneDrive.exe
   - PROCESS-NAME,DingTalk.exe
