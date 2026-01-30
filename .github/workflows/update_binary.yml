@@ -20,13 +20,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           echo ">>> 下载最新正式版内核 (Compatible)..."
-          # 精准匹配 compatible 版本，避免多文件冲突
           gh release download --repo MetaCubeX/mihomo --pattern "*linux-amd64-compatible-v*.gz" --output mihomo.gz
           
           gunzip mihomo.gz
           chmod +x mihomo
           
-          # 创建结果存放目录
           mkdir -p RULE-SET
           
           echo ">>> 内核版本："
@@ -38,30 +36,28 @@ jobs:
           curl -sSL "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/pro.plus.txt" -o raw.txt
 
           echo ">>> 转换为 YAML 格式..."
-          # 写入头部
           echo "payload:" > hagezi_temp.yaml
-          # 文本处理
           grep -vE '^#|^$' raw.txt | sed "s/^/  - '/; s/$/'/" >> hagezi_temp.yaml
           
-          echo ">>> 检查 YAML 头部 (前5行)..."
+          echo ">>> 检查 YAML 头部..."
           head -n 5 hagezi_temp.yaml
 
           echo ">>> 编译为二进制 (.mrs)..."
-          # ⚠️ 修正点：去掉了 -d temp_config
-          ./mihomo convert-ruleset domain hagezi_temp.yaml RULE-SET/hagezi_pro_plus.mrs
+          # ⚠️⚠️⚠️ 修正点：在 domain 后面加了 yaml
+          # 语法: convert-ruleset <行为> <格式> <输入> <输出>
+          ./mihomo convert-ruleset domain yaml hagezi_temp.yaml RULE-SET/hagezi_pro_plus.mrs
           
           echo ">>> 验证生成结果："
           ls -lh RULE-SET/hagezi_pro_plus.mrs
           
-          # 清理临时文件
           rm raw.txt hagezi_temp.yaml
 
       - name: 4. 处理 Direct (你自己的规则)
         run: |
           if [ -f "direct.yaml" ]; then
             echo ">>> 编译 Direct Rule..."
-            # ⚠️ 修正点：去掉了 -d temp_config
-            ./mihomo convert-ruleset domain direct.yaml RULE-SET/direct.mrs
+            # ⚠️⚠️⚠️ 修正点：在 domain 后面加了 yaml
+            ./mihomo convert-ruleset domain yaml direct.yaml RULE-SET/direct.mrs
             
             echo ">>> 验证生成结果："
             ls -lh RULE-SET/direct.mrs
@@ -71,16 +67,12 @@ jobs:
 
       - name: 5. 提交并上传
         run: |
-          # 删除内核文件
           rm mihomo
-
-          # 配置 Git
+          
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          # 添加文件
           git add RULE-SET/*.mrs
           
-          # 提交 (如果没变化则忽略错误)
           git commit -m "Auto-update rules binaries [skip ci]" || exit 0
           git push
