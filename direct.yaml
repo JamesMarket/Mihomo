@@ -1,23 +1,5 @@
-# 个人使用白名单
-# MAc和Win双端混合规则
+# 直连域名管理
 
 payload:
-  # ====== [COMMON] 跨平台通用域名 ======
-  - DOMAIN-SUFFIX,seatable.cn
-  - DOMAIN-SUFFIX,lingxingerp.com
-
-
-  # ====== [macOS] 进程列表 ======
-  - PROCESS-NAME,OneDrive
-  - PROCESS-NAME,WeChat
-  - PROCESS-NAME,DingTalk
-  - PROCESS-NAME,Longshot
-  - PROCESS-NAME,PasteNow
-  - PROCESS-NAME,wpsoffice
-
-
-  # ====== [Windows] 进程列表 ======
-  - PROCESS-NAME,WeChat.exe
-  - PROCESS-NAME,OneDrive.exe
-  - PROCESS-NAME,Telegram.exe
-  - PROCESS-NAME,DingTalk.exe
+  - seatable.cn
+  - lingxingerp.com
