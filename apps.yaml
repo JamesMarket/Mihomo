@@ -1,0 +1,16 @@
+# 直连应用列表
+# MAc和Win双端混合规则
+payload:
+  # ====== macOS ======
+  - PROCESS-NAME,WeChat
+  - PROCESS-NAME,OneDrive
+  - PROCESS-NAME,DingTalk
+  - PROCESS-NAME,Longshot
+  - PROCESS-NAME,PasteNow
+  - PROCESS-NAME,wpsoffice
+
+  # ====== Windows ======
+  - PROCESS-NAME,WeChat.exe
+  - PROCESS-NAME,OneDrive.exe
+  - PROCESS-NAME,DingTalk.exe
+  - PROCESS-NAME,Telegram.exe
