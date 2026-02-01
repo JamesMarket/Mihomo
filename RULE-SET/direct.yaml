@@ -14,6 +14,8 @@ payload:
   - PROCESS-NAME,Longshot
   - PROCESS-NAME,PasteNow
   - PROCESS-NAME,wpsoffice
+  - PROCESS-NAME,Windows App
+  - PROCESS-NAME,夸克网盘
 
   # ====== Windows (不区分大小写) ======
   - PROCESS-NAME,WeChat.exe
