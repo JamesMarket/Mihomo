@@ -8,6 +8,7 @@ payload:
   - DOMAIN-SUFFIX,xiaohongshu.com
 
   # ====== macOS (区分大小写) ======
+  - PROCESS-NAME,apsd
   - PROCESS-NAME,WeChat
   - PROCESS-NAME,OneDrive
   - PROCESS-NAME,DingTalk
