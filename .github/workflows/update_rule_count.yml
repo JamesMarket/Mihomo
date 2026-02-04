@@ -1,35 +1,55 @@
-name: 自动更新规则总数
+name: 规则计数器
 
 on:
   push:
     paths:
-      - 'RULE-SET/direct.yaml' # 仅当该文件变动时触发
+      - 'RULE-SET/direct.yaml'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # 确保有写权限以推回更改
+      contents: write
 
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 计算并更新规则总数
+      - name: 动态区间统计与更新
         run: |
           FILE_PATH="RULE-SET/direct.yaml"
           
-          # 统计以 "  - " 开头的规则行数
-          # 根据 2026 年 2 月 2 日的记录，你已在此文件中定义了此类规则
-          COUNT=$(grep -c "^[[:space:]]*- " "$FILE_PATH")
-          echo "检测到规则总数: $COUNT"
+          # 1. 计算全局总数
+          TOTAL_COUNT=$(grep -c "^[[:space:]]*- " "$FILE_PATH")
+          sed -i "s/\(# 总规则数: \)[0-9]*/\1$TOTAL_COUNT/" "$FILE_PATH"
+
+          # 2. 动态处理所有分类块
+          # 获取所有以 "# ====== 数字. " 开头的标题行号
+          line_numbers=$(grep -n "# ====== [0-9]\+\. " "$FILE_PATH" | cut -d: -f1)
+          lines=($line_numbers)
           
-          # 使用 sed 精准替换数字，同时保留前面的空格和文字格式
-          # 搜索包含 "# 总规则数: " 的行，并将冒号后的数字替换为变量 $COUNT
-          sed -i "s/\(# 总规则数: \)[0-9]*/\1$COUNT/" "$FILE_PATH"
+          for i in "${!lines[@]}"; do
+            start_line=${lines[$i]}
+            
+            # 确定该分类块的结束行（下一个标题行前，或文件末尾）
+            if [ $((i+1)) -lt ${#lines[@]} ]; then
+              end_line=${lines[$((i+1))]}
+            else
+              end_line=$(wc -l < "$FILE_PATH")
+            fi
+            
+            # 在这个区间内统计活跃规则（以 "- " 开头且非注释的行）
+            # 我们通过 sed 提取该区间内容，再用 grep 统计
+            section_count=$(sed -n "${start_line},${end_line}p" "$FILE_PATH" | grep -c "^[[:space:]]*- ")
+            
+            # 更新标题下方那一行（即 start_line + 1）的统计数值
+            # 只有当下一行确实包含 "[当前类别统计]" 字样时才执行，防止误改正常注释
+            target_line=$((start_line + 1))
+            sed -i "${target_line}s/\(\[当前类别统计\]: \)[0-9]*/\1$section_count/" "$FILE_PATH"
+          done
 
       - name: 自动提交更改
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: 自动更新规则总数为 $COUNT [skip ci]"
+          commit_message: "chore: 实时更新全量规则统计 [skip ci]"
           file_pattern: 'RULE-SET/direct.yaml'
