@@ -1,9 +1,13 @@
-# 直连域名/应用列表
-# Mac和Win双端混合规则
+# ===============================================================
+# 规则说明：
+# 1. 优先级：规则从上到下匹配，匹配成功即停止。
+# 2. no-resolve：用于 IP 类规则，防止为了匹配规则而触发不必要的 DNS 解析。
+# 3. 进程匹配：Win 端建议带 .exe 后缀，macOS 区分大小写。
+# ===============================================================
 
 payload:
-
-  # ====== 域名类 (记得加 DOMAIN-SUFFIX) ======
+  # ====== 1. 域名后缀匹配 (DOMAIN-SUFFIX) ======
+  # 匹配该域名及其所有子域名
   - DOMAIN-SUFFIX,seatable.cn
   - DOMAIN-SUFFIX,lingxingerp.com
   - DOMAIN-SUFFIX,xiaohongshu.com
@@ -13,8 +17,12 @@ payload:
   - DOMAIN-SUFFIX,daixiahuapp.com
   - DOMAIN-SUFFIX,shuang.fun
   - DOMAIN-SUFFIX,moyulm.com
+
+
+  # ====== 2. 进程名匹配 (PROCESS-NAME) ======
   
-  # ====== macOS (区分大小写) ======
+  # macOS 进程名
+  
   - PROCESS-NAME,WeChat
   - PROCESS-NAME,OneDrive
   - PROCESS-NAME,DingTalk
@@ -23,8 +31,60 @@ payload:
   - PROCESS-NAME,wpsoffice
   - PROCESS-NAME,Windows App
   - PROCESS-NAME,夸克网盘
-
-  # ====== Windows (不区分大小写) ======
+  
+  # Windows 进程名
+  
   - PROCESS-NAME,WeChat.exe
   - PROCESS-NAME,OneDrive.exe
   - PROCESS-NAME,DingTalk.exe
+
+
+  # ===============================================================
+  # 以下为模板扩展区（已注释），可根据需要取消注释并修改
+  # ===============================================================
+
+  # ====== 3. 域名其他匹配类型 ======
+  # - DOMAIN,www.google.com           # 完整域名匹配
+  # - DOMAIN-KEYWORD,amazon           # 域名关键字匹配
+  # - DOMAIN-WILDCARD,*.google.com    # 通配符匹配 (* 匹配零或多字符，? 匹配单字符)
+  # - DOMAIN-REGEX,^abc.*com          # 正则表达式匹配
+  # - GEOSITE,youtube                 # 预设域名集合匹配
+
+  # ====== 4. IP 地址匹配 (目标) ======
+  # - IP-CIDR,127.0.0.0/8,no-resolve  # IPv4 网段匹配
+  # - IP-CIDR6,2620::/32,no-resolve   # IPv6 网段匹配
+  # - IP-SUFFIX,8.8.8.8/24            # IP 后缀匹配
+  # - IP-ASN,13335                    # 自治系统号 (ASN) 匹配
+  # - GEOIP,CN,no-resolve             # 地理位置 (国家代码) 匹配
+
+  # ====== 5. 来源 IP/ASN 匹配 ======
+  # - SRC-IP-CIDR,192.168.1.201/32    # 匹配发出请求的本地 IP
+  # - SRC-GEOIP,cn                    # 匹配来源 IP 所属国家
+
+  # ====== 6. 端口与协议匹配 ======
+  # - DST-PORT,80                     # 匹配目标端口范围 (可写为 80-443)
+  # - SRC-PORT,7777                   # 匹配来源端口范围
+  # - NETWORK,udp                     # 匹配协议类型 (tcp/udp)
+  # - IN-PORT,7890                    # 匹配特定入站端口
+  # - IN-TYPE,SOCKS/HTTP              # 匹配入站协议类型
+
+  # ====== 7. 高级进程路径匹配 ======
+  # - PROCESS-PATH,/usr/bin/wget      # Linux/macOS 完整路径匹配
+  # - PROCESS-PATH,C:\Program Files\Google\Chrome\Application\chrome.exe # Win 完整路径
+  # - PROCESS-PATH-REGEX,.*bin/wget   # 进程路径正则匹配
+
+  # ====== 8. 入站元数据匹配 ======
+  # - IN-USER,mihomo                  # 匹配入站用户名
+  # - IN-NAME,ss                      # 匹配入站名称
+
+  # ====== 9. 逻辑规则 (AND/OR/NOT) ======
+  # - AND,((DOMAIN,baidu.com),(NETWORK,UDP)) # 与逻辑
+  # - OR,((NETWORK,UDP),(DOMAIN,baidu.com))  # 或逻辑
+  # - NOT,((DOMAIN,baidu.com))               # 非逻辑
+
+  # ====== 10. 系统与系统底层 ======
+  # - UID,1001                        # 匹配 Linux 用户 ID
+  # - DSCP,4                          # 匹配 DSCP 标记
+
+  # ====== 11. 兜底匹配 ======
+  # - MATCH                           # 全匹配（通常作为文件末尾的最后一条规则）
