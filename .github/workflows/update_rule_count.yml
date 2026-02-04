@@ -16,55 +16,54 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 动态区间统计与精准更新
-        env:
-          LC_ALL: C.UTF-8 # 强制使用 UTF-8 编码处理中文
+        shell: python
         run: |
-          FILE_PATH="RULE-SET/direct.yaml"
-          
-          # 1. 计算全局总数
-          TOTAL_COUNT=$(grep -c "^[[:space:]]*- " "$FILE_PATH" || echo 0)
-          echo "检测到总规则数: $TOTAL_COUNT"
-          
-          # 使用 @ 作为定界符，-E 启用扩展正则，匹配更稳健
-          sed -i -E "s@(# 总规则数[:：][[:space:]]*)[0-9]*@\1$TOTAL_COUNT@" "$FILE_PATH"
+          import re
+          import os
 
-          # 2. 获取分类标题的行号
-          line_numbers=$(grep -n "#[[:space:]]*======[[:space:]]*[0-9]\+\." "$FILE_PATH" | cut -d: -f1 || true)
+          file_path = "RULE-SET/direct.yaml"
           
-          if [ -z "$line_numbers" ]; then
-            echo "未检测到分类标题，请检查格式。"
-          else
-            lines=($line_numbers)
-            for i in "${!lines[@]}"; do
-              start_line=${lines[$i]}
+          with open(file_path, "r", encoding="utf-8") as f:
+              lines = f.readlines()
+
+          # 1. 计算全局总规则数 (以 "- " 开头的行)
+          total_rules = sum(1 for line in lines if line.strip().startswith("- "))
+          print(f"检测到总规则数: {total_rules}")
+
+          # 2. 更新顶部的总规则数
+          for i in range(len(lines)):
+              if "# 总规则数" in lines[i]:
+                  # 使用 \g<1> 明确分组，避免 \122 这种歧义
+                  lines[i] = re.sub(r"(# 总规则数[:：]\s*)\d+", rf"\g<1>{total_rules}", lines[i])
+                  break
+
+          # 3. 动态处理分类块
+          # 寻找标题行索引，如 # ====== 1. ... ======
+          headers = [i for i, line in enumerate(lines) if re.search(r"#\s*======\s*\d+\.", line)]
+
+          for i, start_idx in enumerate(headers):
+              # 确定该分类块的搜索范围
+              end_idx = headers[i+1] if i + 1 < len(headers) else len(lines)
               
-              # 确定该分类块的结束行
-              if [ $((i+1)) -lt ${#lines[@]} ]; then
-                end_line=$((lines[$((i+1))] - 1))
-              else
-                end_line=$(wc -l < "$FILE_PATH")
-              fi
+              # 统计该区间内的活跃规则
+              section_count = sum(1 for j in range(start_idx, end_idx) if lines[j].strip().startswith("- "))
               
-              # 统计区间内以 "- " 开头的行
-              section_count=$(sed -n "${start_line},${end_line}p" "$FILE_PATH" | grep -c "^[[:space:]]*- " || echo 0)
-              
-              # 在标题后 5 行内寻找 [当前类别统计] 占位符
-              search_limit=$((start_line + 5))
-              rel_target=$(sed -n "${start_line},${search_limit}p" "$FILE_PATH" | grep -n "\[当前类别统计\]" | head -n 1 | cut -d: -f1 || true)
-              
-              if [ ! -z "$rel_target" ]; then
-                target_line=$((start_line + rel_target - 1))
-                # 精准更新该行的统计数字
-                sed -i -E "${target_line}s@(\[当前类别统计\][:：][[:space:]]*)[0-9]*@\1$section_count@" "$FILE_PATH"
-              fi
-            done
-          fi
+              # 在标题下方的 5 行内寻找 [当前类别统计] 占位符
+              for j in range(start_idx + 1, min(start_idx + 6, len(lines))):
+                  if "[当前类别统计]" in lines[j]:
+                      lines[j] = re.sub(r"(\[当前类别统计\][:：]\s*)\d+", rf"\g<1>{section_count}", lines[j])
+                      break
+
+          # 4. 写回文件
+          with open(file_path, "w", encoding="utf-8") as f:
+              f.writelines(lines)
           
-          # 将总数存入环境变量供 Commit Message 使用
-          echo "TOTAL_COUNT=$TOTAL_COUNT" >> $GITHUB_ENV
+          # 设置环境变量供 commit message 使用
+          with open(os.environ['GITHUB_ENV'], 'a') as env_file:
+              env_file.write(f"TOTAL_COUNT={total_rules}\n")
 
       - name: 自动提交更改
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: 自动更新规则统计 (活跃总数: ${{ env.TOTAL_COUNT }}) [skip ci]"
+          commit_message: "chore: 自动更新规则统计 (总数: ${{ env.TOTAL_COUNT }}) [skip ci]"
           file_pattern: 'RULE-SET/direct.yaml'
