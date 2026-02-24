@@ -32,9 +32,9 @@ jobs:
           echo ">>> 内核版本："
           ./mihomo -v
 
-      - name: 3. 处理 Hagezi Pro Plus
+      - name: 3. 处理 Hagezi Pro Plus 并合并自定义规则
         run: |
-          echo ">>> [1/4] 下载 Hagezi 源文件..."
+          echo ">>> [1/5] 下载 Hagezi 源文件..."
           curl -sSL "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/pro.plus.txt" -o raw.txt
           
           if [ ! -s raw.txt ]; then
@@ -42,33 +42,43 @@ jobs:
             exit 1
           fi
 
-          echo ">>> [2/4] 生成文本版 YAML 规则..."
-          # 直接将输出路径指向 RULE-SET 文件夹
+          echo ">>> [2/5] 生成文本版 YAML 规则..."
           YAML_FILE="RULE-SET/hagezi_pro_plus.yaml"
           echo "payload:" > $YAML_FILE
           
-          # 格式化并写入 YAML
+          # 格式化并写入 Hagezi 规则
           grep -vE '^#|^$' raw.txt | sed "s/^/  - '/; s/$/'/" >> $YAML_FILE
           
-          echo ">>> [3/4] 编译为二进制 (.mrs)..."
+          echo ">>> [3/5] 合并本地自定义黑名单 (block.yaml)..."
+          # 检查同仓库下的 block.yaml 是否存在
+          if [ -f "RULE-SET/block.yaml" ]; then
+            echo "发现 RULE-SET/block.yaml，开始处理并合并..."
+            # 魔法指令：去除首尾空格 -> 剔除注释和空行 -> 加上 YAML 格式符号 -> 追加到目标文件
+            sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' RULE-SET/block.yaml | grep -vE '^#|^$' | sed -e "s/^/  - '/" -e "s/$/'/" >> $YAML_FILE
+            echo "✅ 自定义黑名单合并完成！"
+          else
+            echo "⚠️ 未找到 RULE-SET/block.yaml，跳过合并。"
+          fi
+          
+          echo ">>> [4/5] 编译为二进制 (.mrs)..."
           ./mihomo convert-ruleset domain yaml $YAML_FILE RULE-SET/hagezi_pro_plus.mrs
           
-          echo ">>> [4/4] 验证生成结果"
+          echo ">>> [5/5] 验证生成结果"
           ls -lh RULE-SET/hagezi_pro_plus.*
           
-          # 只清理原始下载的 txt 文件，保留生成好的 yaml 和 mrs
+          # 只清理原始下载的 txt 文件
           rm raw.txt
 
       - name: 4. 提交并上传
         run: |
-          # 删除内核文件
+          # 删除内核文件，避免提交到仓库
           rm mihomo
 
           # 配置 Git 身份
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          # ⚠️ 修改点：同时添加 .mrs 和 .yaml 文件
+          # 添加生成的文件
           git add RULE-SET/hagezi_pro_plus.mrs RULE-SET/hagezi_pro_plus.yaml
           
           # 提交更改
