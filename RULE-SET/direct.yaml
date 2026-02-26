@@ -18,6 +18,8 @@ payload:
   - DOMAIN-SUFFIX,linzhou.fun
   - DOMAIN-SUFFIX,moyulm.com
   - DOMAIN-SUFFIX,ollama.ai
+  - DOMAIN-SUFFIX,ocsub.xyz
+  - DOMAIN-SUFFIX,nginx24ppy.xyz
 
   # ====== 2. 进程名匹配 (PROCESS-NAME) ======
   # [当前类别统计]: 12
@@ -63,7 +65,7 @@ payload:
 
   # ====== 6. 端口与协议匹配 ======
   # [当前类别统计]: 0
-  # - DST-PORT,80
+  - DST-PORT,3389
   # - SRC-PORT,7777
   # - NETWORK,udp
   # - IN-PORT,7890
