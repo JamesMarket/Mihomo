@@ -28,7 +28,6 @@ payload:
   - PROCESS-NAME,WeChat
   - PROCESS-NAME,OneDrive
   - PROCESS-NAME,DingTalk
-  - PROCESS-NAME,Longshot
   - PROCESS-NAME,PasteNow
   - PROCESS-NAME,wpsoffice
   - PROCESS-NAME,Windows App
