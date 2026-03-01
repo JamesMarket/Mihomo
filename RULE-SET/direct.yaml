@@ -21,6 +21,7 @@ payload:
   - DOMAIN-SUFFIX,ocsub.xyz
   - DOMAIN-SUFFIX,nginx24ppy.xyz
   - DOMAIN-SUFFIX,xhscdn.com
+  - GEOSITE,steam@cn
 
   # ====== 2. 进程名匹配 (PROCESS-NAME) ======
   # [当前类别统计]: 11
