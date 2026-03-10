@@ -22,7 +22,7 @@ payload:
   - DOMAIN-SUFFIX,nginx24ppy.xyz
   - DOMAIN-SUFFIX,xhscdn.com
   - DOMAIN-SUFFIX,xiangguys.com
-  - GEOSITE,steam@cn
+  
 
   # ====== 2. 进程名匹配 (PROCESS-NAME) ======
   # [当前类别统计]: 11
@@ -40,9 +40,6 @@ payload:
   - PROCESS-NAME,DingTalk.exe
   - PROCESS-NAME,ollama.exe
 
-  # ===============================================================
-  # 以下为模板扩展区：当取消注释规则时，上方统计会自动更新
-  # ===============================================================
 
   # ====== 3. 域名其他匹配类型 ======
   # [当前类别统计]: 0
@@ -68,10 +65,6 @@ payload:
   # ====== 6. 端口与协议匹配 ======
   # [当前类别统计]: 1
   - DST-PORT,3389
-  # - SRC-PORT,7777
-  # - NETWORK,udp
-  # - IN-PORT,7890
-  # - IN-TYPE,SOCKS/HTTP
 
   # ====== 7. 高级进程路径匹配 ======
   # [当前类别统计]: 0
@@ -95,6 +88,9 @@ payload:
   # - UID,1001
   # - DSCP,4
 
-  # ====== 11. 兜底匹配 ======
+  # ====== 11. GEOSITE规则匹配 ======
   # [当前类别统计]: 0
-  # - MATCH
+  - GEOSITE,category-pt
+  - GEOSITE,bittorrent
+  - GEOSITE,steam@cn
+  - GEOSITE,epicgames
