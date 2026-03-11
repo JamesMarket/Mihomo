@@ -32,42 +32,49 @@ jobs:
           echo ">>> 内核版本："
           ./mihomo -v
 
-      - name: 3. 处理 Hagezi Pro Plus 并合并自定义规则
+      - name: 3. 下载、合并并去重去广告源
         run: |
-          echo ">>> [1/5] 下载 Hagezi 源文件..."
-          curl -sSL "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/pro.plus.txt" -o raw.txt
+          echo ">>> [1/5] 下载 Hagezi 国际去广告源..."
+          curl -sSL "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/domains/pro.plus.txt" -o hagezi.txt
           
-          if [ ! -s raw.txt ]; then
-            echo "❌ 下载失败或文件为空！"
+          echo ">>> [2/5] 下载 Loyalsoldier 国内去广告源..."
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/reject-list.txt" -o cn_reject.txt
+          
+          if [ ! -s hagezi.txt ] || [ ! -s cn_reject.txt ]; then
+            echo "❌ 下载源文件失败或文件为空！"
             exit 1
           fi
 
-          echo ">>> [2/5] 生成文本版 YAML 规则..."
-          YAML_FILE="RULE-SET/hagezi_pro_plus.yaml"
-          echo "payload:" > $YAML_FILE
+          echo ">>> [3/5] 合并所有源并进行全局去重..."
+          # 提取纯域名并初步合并
+          cat hagezi.txt cn_reject.txt | grep -vE '^#|^$' > merged_raw.txt
           
-          # 格式化并写入 Hagezi 规则
-          grep -vE '^#|^$' raw.txt | sed "s/^/  - '/; s/$/'/" >> $YAML_FILE
-          
-          echo ">>> [3/5] 合并本地自定义黑名单 (block.yaml)..."
-          # 检查同仓库下的 block.yaml 是否存在
+          # 检查并提取本地自定义黑名单
           if [ -f "RULE-SET/block.yaml" ]; then
-            echo "发现 RULE-SET/block.yaml，开始处理并合并..."
-            # 魔法指令：去除首尾空格 -> 剔除注释和空行 -> 加上 YAML 格式符号 -> 追加到目标文件
-            sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' RULE-SET/block.yaml | grep -vE '^#|^$' | sed -e "s/^/  - '/" -e "s/$/'/" >> $YAML_FILE
-            echo "✅ 自定义黑名单合并完成！"
-          else
-            echo "⚠️ 未找到 RULE-SET/block.yaml，跳过合并。"
+            echo "发现 RULE-SET/block.yaml，提取并合并..."
+            sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' RULE-SET/block.yaml | grep -vE '^#|^$' >> merged_raw.txt
           fi
           
-          echo ">>> [4/5] 编译为二进制 (.mrs)..."
+          # 核心魔法：利用 sort -u 进行全局排序并彻底去重
+          sort -u merged_raw.txt > final_domains.txt
+          
+          # 统计去重后的域名总数，方便在日志中查看
+          DOMAIN_COUNT=$(wc -l < final_domains.txt)
+          echo "✅ 合并去重完成，当前规则库共包含 $DOMAIN_COUNT 个高危/广告域名！"
+
+          echo ">>> [4/5] 生成标准 YAML 规则..."
+          YAML_FILE="RULE-SET/hagezi_pro_plus.yaml"
+          echo "payload:" > $YAML_FILE
+          sed "s/^/  - '/; s/$/'/" final_domains.txt >> $YAML_FILE
+          
+          echo ">>> [5/5] 编译为终极二进制 (.mrs)..."
           ./mihomo convert-ruleset domain yaml $YAML_FILE RULE-SET/hagezi_pro_plus.mrs
           
-          echo ">>> [5/5] 验证生成结果"
+          echo ">>> 验证生成结果"
           ls -lh RULE-SET/hagezi_pro_plus.*
           
-          # 只清理原始下载的 txt 文件
-          rm raw.txt
+          # 清理所有临时产生的文本文件
+          rm hagezi.txt cn_reject.txt merged_raw.txt final_domains.txt
 
       - name: 4. 提交并上传
         run: |
@@ -81,27 +88,21 @@ jobs:
           # 添加生成的文件
           git add RULE-SET/hagezi_pro_plus.mrs RULE-SET/hagezi_pro_plus.yaml
           
-          # 提交更改
+          # 提交更改 (如果没有更改则直接 exit 0 保证流水线不报错)
           git commit -m "Auto-update rules: Binary and YAML [skip ci]" || exit 0
           git push
 
       - name: 5. 刷新 jsdelivr CDN 缓存
-        # 只有上一步 push 成功（或者没有改动直接 exit 0 退出）时才执行
         if: success() 
         run: |
           echo ">>> 等待 GitHub 服务器同步数据..."
-          sleep 5 # 停顿 5 秒，给 GitHub Raw 接口一点反应时间，避免 jsdelivr 抓到旧文件
+          sleep 5
           
           echo ">>> 开始发送清理请求..."
-          
-          # 使用 github.repository 自动获取你的 "JamesMarket/Mihomo"
-          # 刷新刚才生成的 mrs 二进制文件
-          curl -s "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/RULE-SET/hagezi_pro_plus.mrs"
-          
-          # 刷新对应的 yaml 文本文件
-          curl -s "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/RULE-SET/hagezi_pro_plus.yaml"
-          
-          # 顺手把你平常可能会手动修改的 personal_direct 规则也刷新一下（如果有的话）
-          curl -s "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/RULE-SET/direct.yaml"
+          curl "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/RULE-SET/hagezi_pro_plus.mrs"
+          echo ""
+          curl "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/RULE-SET/hagezi_pro_plus.yaml"
+          echo ""
+          curl "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/RULE-SET/direct.yaml"
           
           echo -e "\n✅ jsdelivr 缓存刷新指令已发送！"
