@@ -84,3 +84,24 @@ jobs:
           # 提交更改
           git commit -m "Auto-update rules: Binary and YAML [skip ci]" || exit 0
           git push
+
+      - name: 5. 刷新 jsdelivr CDN 缓存
+        # 只有上一步 push 成功（或者没有改动直接 exit 0 退出）时才执行
+        if: success() 
+        run: |
+          echo ">>> 等待 GitHub 服务器同步数据..."
+          sleep 5 # 停顿 5 秒，给 GitHub Raw 接口一点反应时间，避免 jsdelivr 抓到旧文件
+          
+          echo ">>> 开始发送清理请求..."
+          
+          # 使用 github.repository 自动获取你的 "JamesMarket/Mihomo"
+          # 刷新刚才生成的 mrs 二进制文件
+          curl -s "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/RULE-SET/hagezi_pro_plus.mrs"
+          
+          # 刷新对应的 yaml 文本文件
+          curl -s "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/RULE-SET/hagezi_pro_plus.yaml"
+          
+          # 顺手把你平常可能会手动修改的 personal_direct 规则也刷新一下（如果有的话）
+          curl -s "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/RULE-SET/direct.yaml"
+          
+          echo -e "\n✅ jsdelivr 缓存刷新指令已发送！"
