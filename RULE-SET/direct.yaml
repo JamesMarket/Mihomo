@@ -95,3 +95,4 @@ payload:
   - GEOSITE,bittorrent
   - GEOSITE,steam@cn
   - GEOSITE,epicgames
+  - GEOSITE,paypal
