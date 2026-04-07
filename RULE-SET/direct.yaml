@@ -11,18 +11,16 @@ payload:
   - DOMAIN-SUFFIX,seatable.cn
   - DOMAIN-SUFFIX,lingxingerp.com
   - DOMAIN-SUFFIX,xiaohongshu.com
+  - DOMAIN-SUFFIX,xhscdn.com
   - DOMAIN-SUFFIX,oracle.com
   - DOMAIN-SUFFIX,oraclecloud.com
   - DOMAIN-SUFFIX,daixialu.com
   - DOMAIN-SUFFIX,daixiahuapp.com
-  - DOMAIN-SUFFIX,linzhou.fun
   - DOMAIN-SUFFIX,moyulm.com
   - DOMAIN-SUFFIX,ollama.com
   - DOMAIN-SUFFIX,ocsub.xyz
   - DOMAIN-SUFFIX,nginx24ppy.xyz
-  - DOMAIN-SUFFIX,xhscdn.com
   - DOMAIN-SUFFIX,xiangguys.com
-  - DOMAIN-SUFFIX,paypal.com
   
 
   # ====== 2. 进程名匹配 (PROCESS-NAME) ======
