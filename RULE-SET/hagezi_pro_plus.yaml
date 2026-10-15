@@ -2,7 +2,7 @@ payload:
   - '    <h1>Error 503 first byte timeout</h1>'
   - '    <h3>Error 54113</h3>'
   - '    <hr>'
-  - '    <p>Details: cache-chi-klot8100104-CHI 1792038238 3492973507</p>'
+  - '    <p>Details: cache-iad-kiad7000187-IAD 1792063166 2858008516</p>'
   - '    <p>Varnish cache server</p>'
   - '    <p>first byte timeout</p>'
   - '    <title>503 first byte timeout</title>'
